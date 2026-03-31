@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Christina — Daily Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal: #0F6E56; --teal-l: #E1F5EE; --teal-d: #085041;
+  --blue: #185FA5; --blue-l: #E6F1FB;
+  --amber: #854F0B; --amber-l: #FAEEDA;
+  --purple: #534AB7; --purple-l: #EEEDFE;
+  --green: #3B6D11; --green-l: #EAF3DE;
+  --coral: #993C1D; --coral-l: #FAECE7;
+  --pink: #993556; --pink-l: #FBEAF0;
+  --gray: #F5F5F5; --gray-m: #DDDDDD; --gray-d: #888;
+  --bg: #F8F7F4; --card: #FFFFFF;
+  --text: #1A1A1A; --text2: #555; --text3: #999;
+  --border: #E5E5E5;
+  --radius: 12px; --radius-sm: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'DM Sans', sans-serif; background: #F8F7F4; color: #1A1A1A; min-height: 100vh; }
+a { color: inherit; text-decoration: none; }
+
+/* NAV */
+.nav-bar { position: sticky; top: 0; z-index: 100; background: #FFFFFF; border-bottom: 1px solid #E5E5E5; padding: 0 4px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.nav-bar::-webkit-scrollbar { display: none; }
+.nav-btn { flex-shrink: 0; padding: 12px 14px; font-size: 13px; font-weight: 500; color: #999999; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.nav-btn.active { color: #0F6E56; border-bottom-color: #0F6E56; }
+
+/* PAGES */
+.page { display: none; padding: 16px; max-width: 600px; margin: 0 auto; }
+.page.on { display: block; }
+
+/* CARDS */
+.card { background: #FFFFFF; border-radius: 12px; border: 1px solid #E5E5E5; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card-title { font-size: 14px; font-weight: 600; color: #1A1A1A; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #E5E5E5; }
+
+/* COUNTDOWN */
+.cd-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 10px; }
+.cd-box { background: #E1F5EE; border-radius: 8px; padding: 12px 6px; text-align: center; }
+.cd-num { font-size: 26px; font-weight: 600; color: #0F6E56; font-family: 'DM Mono', monospace; }
+.cd-lbl { font-size: 10px; color: #085041; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* PROGRESS */
+.pbar-wrap { background: #DDDDDD; border-radius: 4px; height: 6px; overflow: hidden; margin: 8px 0 4px; }
+.pbar { height: 6px; border-radius: 4px; background: #0F6E56; transition: width 0.4s ease; }
+.pbar-label { font-size: 11px; color: #999999; }
+
+/* APPS */
+.app-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #E5E5E5; }
+.app-item:last-child { border-bottom: none; }
+.app-dot { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.app-info { flex: 1; min-width: 0; }
+.app-name { font-size: 14px; font-weight: 600; color: #1A1A1A; }
+.app-desc { font-size: 12px; color: #555555; margin-top: 2px; line-height: 1.4; }
+.login-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.lf { display: flex; flex-direction: column; gap: 2px; }
+.ll { font-size: 9px; color: #999999; text-transform: uppercase; letter-spacing: 0.06em; }
+.lv { font-size: 12px; font-weight: 500; color: #1A1A1A; background: #F5F5F5; border: 1px solid #E5E5E5; border-radius: 6px; padding: 4px 8px; cursor: pointer; user-select: all; -webkit-user-select: all; }
+.lv:active { background: #E1F5EE; }
+.open-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: 8px; border: 1px solid #0F6E56; color: #0F6E56; background: #E1F5EE; cursor: pointer; flex-shrink: 0; font-family: 'DM Sans', sans-serif; text-decoration: none; }
+.open-btn:active { background: #0F6E56; color: white; }
+
+/* CHECKLIST */
+.check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #E5E5E5; }
+.check-item:last-child { border-bottom: none; }
+.check-item input[type=checkbox] { width: 18px; height: 18px; margin-top: 1px; flex-shrink: 0; accent-color: #0F6E56; cursor: pointer; }
+.check-label { font-size: 13px; color: #555555; line-height: 1.5; cursor: pointer; }
+.check-label.done { text-decoration: line-through; color: #999999; }
+.color-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+
+/* SECTION BADGE */
+.section-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; display: inline-block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* COUNTERS */
+.ctr-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #E5E5E5; }
+.ctr-row:last-child { border-bottom: none; }
+.ctr-info { flex: 1; min-width: 0; }
+.ctr-lbl { font-size: 13px; font-weight: 500; color: #1A1A1A; }
+.ctr-sub { font-size: 11px; color: #999999; margin-top: 1px; }
+.ctr-num { font-size: 22px; font-weight: 600; color: #0F6E56; min-width: 42px; text-align: center; font-family: 'DM Mono', monospace; }
+.ctr-btn { background: #F5F5F5; border: 1px solid #E5E5E5; border-radius: 8px; padding: 6px 14px; font-size: 16px; cursor: pointer; color: #1A1A1A; font-family: 'DM Sans', sans-serif; }
+.ctr-btn:active { background: #E1F5EE; }
+
+/* BIBLE */
+.bible-book { margin-bottom: 6px; border-radius: 8px; overflow: hidden; border: 1px solid #E5E5E5; }
+.bb-hdr { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #F5F5F5; cursor: pointer; }
+.bb-name { font-size: 13px; font-weight: 500; color: #1A1A1A; }
+.bb-meta { font-size: 11px; color: #999999; }
+.bb-chapters { display: none; background: white; }
+.bb-chapters.open { display: block; }
+.ch-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid #E5E5E5; }
+.ch-row input[type=checkbox] { width: 14px; height: 14px; accent-color: #0F6E56; cursor: pointer; flex-shrink: 0; }
+.ch-lbl { font-size: 12px; color: #555555; flex: 1; cursor: pointer; }
+.ch-lbl.done { text-decoration: line-through; color: #999999; }
+.vc { font-size: 10px; color: #999999; }
+
+/* PRAYER */
+.prayer-block { border-left: 3px solid #0F6E56; padding-left: 14px; margin-bottom: 16px; }
+.prayer-time { font-size: 16px; font-weight: 600; color: #0F6E56; }
+.prayer-sub { font-size: 12px; color: #999999; margin: 2px 0 10px; }
+
+/* TEXTAREA */
+textarea { width: 100%; font-size: 13px; color: #1A1A1A; background: #F5F5F5; border: 1px solid #E5E5E5; border-radius: 8px; padding: 10px; resize: vertical; font-family: 'DM Sans', sans-serif; line-height: 1.5; }
+textarea::placeholder { color: #999999; }
+textarea:focus { outline: none; border-color: #0F6E56; }
+
+/* STATS GRID */
+.stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+.stat-box { background: #F5F5F5; border-radius: 8px; padding: 12px 8px; text-align: center; }

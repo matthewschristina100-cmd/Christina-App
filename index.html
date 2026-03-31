@@ -133,6 +133,30 @@ textarea:focus{outline:none;border-color:#0F6E56;}
 .day-title{font-size:16px;font-weight:600;color:#1A1A1A;}
 .day-sub{font-size:12px;color:#999999;}
 
+/* DASHBOARD */
+.dash-ring-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.dash-ring{display:flex;flex-direction:column;align-items:center;padding:10px 6px;}
+.dash-ring svg{width:64px;height:64px;}
+.dash-ring-label{font-size:11px;color:#555555;margin-top:4px;text-align:center;line-height:1.3;}
+.dash-ring-pct{font-size:13px;font-weight:600;color:#0F6E56;}
+.dash-bar-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F5F5F5;}
+.dash-bar-row:last-child{border-bottom:none;}
+.dash-bar-label{font-size:12px;color:#555555;width:130px;flex-shrink:0;}
+.dash-bar-track{flex:1;height:8px;border-radius:4px;background:#F0F0F0;overflow:hidden;}
+.dash-bar-fill{height:8px;border-radius:4px;background:#0F6E56;transition:width 0.4s;}
+.dash-bar-pct{font-size:11px;color:#999999;width:36px;text-align:right;flex-shrink:0;}
+.dash-day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.dash-day-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;cursor:pointer;transition:transform 0.1s;}
+.dash-day-cell:active{transform:scale(0.92);}
+.dash-metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.dash-metric{background:#F8F7F4;border-radius:8px;padding:12px;text-align:center;}
+.dash-metric-num{font-size:24px;font-weight:600;color:#0F6E56;font-family:'DM Mono',monospace;}
+.dash-metric-label{font-size:11px;color:#999999;margin-top:2px;}
+.dash-detail{background:#F0FAF6;border:1px solid #9FE1CB;border-radius:8px;padding:12px;margin-top:8px;display:none;}
+.dash-detail.open{display:block;}
+.dash-detail-title{font-size:13px;font-weight:600;color:#0F6E56;margin-bottom:8px;}
+.dash-detail-item{font-size:12px;color:#555555;padding:3px 0;display:flex;align-items:center;gap:6px;}
+
 @media(max-width:400px){.cd-num{font-size:20px;}.ctr-num{font-size:18px;}}
 </style>
 </head>
@@ -160,6 +184,7 @@ textarea:focus{outline:none;border-color:#0F6E56;}
   <button class="nav-btn" onclick="go('bible',this)">Bible</button>
   <button class="nav-btn" onclick="go('goals',this)">Goals</button>
   <button class="nav-btn" onclick="go('teachings',this)">Teachings</button>
+  <button class="nav-btn" onclick="go('dashboard',this)">Dashboard</button>
 </div>
 
 <div class="page on" id="page-logins">
@@ -259,6 +284,41 @@ textarea:focus{outline:none;border-color:#0F6E56;}
   <div class="card-title">Forgiveness — daily practice</div>
   <div style="font-size:13px;color:#555555;line-height:1.7;margin-bottom:12px;">The fulfillment of the New Covenant. Seek forgiveness. Forgive those who hurt you. Do not let resentment become an excuse to avoid what God has guided you to do.</div>
   <div id="forg-checks"></div>
+</div>
+</div><!-- end teachings -->
+
+<div class="page" id="page-dashboard">
+<div style="font-size:16px;font-weight:600;color:#1A1A1A;margin-bottom:4px;">Dashboard</div>
+<div style="font-size:12px;color:#999999;margin-bottom:12px;">Your daily check-in history — automatically saved</div>
+
+<div class="card">
+  <div class="card-title">Today at a glance</div>
+  <div id="dash-today"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">This week</div>
+  <div id="dash-week"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">This month</div>
+  <div id="dash-month"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">This quarter</div>
+  <div id="dash-quarter"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">This year</div>
+  <div id="dash-year"></div>
+</div>
+
+<div class="card">
+  <div class="card-title">Daily history — tap any day to see details</div>
+  <div id="dash-history"></div>
 </div>
 </div>
 
@@ -415,7 +475,25 @@ function adj(k,max,delta){
 }
 window.adj=adj;
 buildCtrs([{lbl:"Simple preaching",sub:"Goal: 1,000",goal:1000,k:"simple"},{lbl:"Bible studies",sub:"Goal: 100",goal:100,k:"bible_s"},{lbl:"Baptisms",sub:"Goal: 10",goal:10,k:"baptism"},{lbl:"Full-time attendance",sub:"Goal: 1",goal:1,k:"ft"}],'preach-goals');
-buildCtrs([{lbl:"Standard sermons practiced (3x each)",sub:"30 x 3 = 90 sessions",goal:90,k:"sp"},{lbl:"Standard sermons evaluated",sub:"Goal: 30",goal:30,k:"se"},{lbl:"Countermeasures practiced (3x each)",sub:"20 x 3 = 60 sessions",goal:60,k:"cp"},{lbl:"Countermeasures evaluated",sub:"Goal: 20",goal:20,k:"ce"},{lbl:"Total evaluations",sub:"Goal: 50",goal:50,k:"te"}],'sermon-goals');
+buildCtrs([{lbl:"Standard sermons practiced (3x each)",sub:"30 x 3 = 90 sessions",goal:90,k:"sp"},{lbl:"Standard sermons evaluated",sub:"Goal: 30",goal:30,k:"se"},{lbl:"Countermeasures practiced (3x each)",sub:"20 x 3 = 60 sessions",goal:60,k:"cp"},{lbl:"Countermeasures evaluated",sub:"Goal: 20",goal:20,k:"ce"}],'sermon-goals');
+// Auto-calculated total evaluations display
+(function(){
+  function updateTotal(){
+    const se=G['se']||0; const ce=G['ce']||0; const total=se+ce;
+    const pct=Math.min(100,Math.round((total/50)*100));
+    const el=document.getElementById('total-eval-display');
+    if(el){
+      el.innerHTML=`<div class="ctr-row" style="border:none;"><div class="ctr-info"><div class="ctr-lbl">Total evaluations <span style="font-size:11px;font-weight:400;color:#999;">auto-calculated</span></div><div class="ctr-sub">Standard (${se}) + Countermeasures (${ce}) = ${total} of 50</div><div class="pbar-wrap"><div class="pbar" style="width:${pct}%;"></div></div><div class="pbar-label">${total} of 50 (${pct}%)</div></div><div style="min-width:42px;text-align:center;font-size:22px;font-weight:600;color:#0F6E56;font-family:'DM Mono',monospace;">${total}</div></div>`;
+    }
+  }
+  const container=document.getElementById('sermon-goals');
+  const div=document.createElement('div');div.id='total-eval-display';
+  container.appendChild(div);
+  updateTotal();
+  // Patch adj to also refresh total
+  const origAdj=window.adj;
+  window.adj=function(k,max,delta){origAdj(k,max,delta);if(k==='se'||k==='ce'){G[k]=(G[k]||0);updateTotal();}};
+})();
 buildCtrs([{lbl:"Bible chapters completed",sub:"Total: 1,189 chapters",goal:1189,k:"bible_c"}],'bible-goals');
 buildCtrs([{lbl:"Personality reflection",sub:"Daily practice",goal:365,k:"pers"},{lbl:"Mother's teachings",sub:"Daily review",goal:365,k:"moth"},{lbl:"Forgiveness practice",sub:"Daily",goal:365,k:"forg"},{lbl:"Good deed",sub:"Daily",goal:365,k:"deed"},{lbl:"Exercise — 25-min brain growth",sub:"Daily",goal:365,k:"exer"}],'reflect-goals');
 
@@ -482,6 +560,219 @@ FORG.forEach((f,i)=>{
   cb.onchange=()=>{lbl.className='check-label'+(cb.checked?' done':'');};
   row.appendChild(cb);row.appendChild(lbl);fl.appendChild(row);
 });
+
+// ─── DAILY HISTORY SAVE ──────────────────────────────────────
+const CHECK_LABELS=CHECKS.map(c=>c.txt);
+function todayKey(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function saveHistory(){
+  try{
+    const hist=JSON.parse(localStorage.getItem('cg_hist')||'{}');
+    hist[todayKey()]={done:state.filter(Boolean).length,total:state.length,items:[...state],ts:Date.now()};
+    localStorage.setItem('cg_hist',JSON.stringify(hist));
+  }catch(e){}
+}
+// Patch updateDay to also save history
+const _origUpdateDay=updateDay;
+// Override checkbox save to persist history
+const origBuildDay=buildDay;
+function buildDay(){
+  cc.innerHTML='';
+  const groups={};
+  CHECKS.forEach((c,i)=>{if(!groups[c.t])groups[c.t]=[];groups[c.t].push({...c,i});});
+  Object.keys(groups).forEach(t=>{
+    const sec=document.createElement('div');sec.className='card';
+    sec.innerHTML=`<div class="card-title">${t}</div>`;
+    groups[t].forEach(item=>{
+      const row=document.createElement('div');row.className='check-item';
+      const cb=document.createElement('input');cb.type='checkbox';cb.checked=state[item.i];
+      const lbl=document.createElement('label');lbl.className='check-label'+(state[item.i]?' done':'');
+      lbl.innerHTML=`<span class="color-dot" style="background:${item.c};"></span>${item.txt}`;
+      cb.onchange=()=>{state[item.i]=cb.checked;lbl.className='check-label'+(cb.checked?' done':'');updateDayAndSave();};
+      row.appendChild(cb);row.appendChild(lbl);sec.appendChild(row);
+    });
+    cc.appendChild(sec);
+  });
+}
+function updateDayAndSave(){
+  const done=state.filter(Boolean).length;const total=state.length;const pct=Math.round((done/total)*100);
+  document.getElementById('day-bar').style.width=pct+'%';
+  document.getElementById('day-pct').textContent=`${done} of ${total} complete (${pct}%)`;
+  saveHistory();
+}
+function updateDay(){updateDayAndSave();}
+function resetDay(){state.fill(false);buildDay();updateDayAndSave();}
+window.resetDay=resetDay;
+buildDay();updateDayAndSave();
+
+// ─── DASHBOARD ───────────────────────────────────────────────
+function loadHist(){try{return JSON.parse(localStorage.getItem('cg_hist')||'{}');}catch(e){return {};}}
+
+function ring(pct,color,size){
+  color=color||'#0F6E56';size=size||64;
+  const r=24;const circ=2*Math.PI*r;const dash=circ*(pct/100);const gap=circ-dash;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" fill="none" stroke="#F0F0F0" stroke-width="6"/><circle cx="32" cy="32" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${dash.toFixed(1)} ${gap.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 32 32)"/><text x="32" y="37" text-anchor="middle" font-size="13" font-weight="600" fill="${color}" font-family="DM Mono,monospace">${Math.round(pct)}%</text></svg>`;
+}
+
+function heatColor(pct){
+  if(pct===undefined||pct===null)return '#F0F0F0';
+  if(pct>=86)return '#0F6E56';
+  if(pct>=57)return '#5DCAA5';
+  if(pct>=29)return '#FAEEDA';
+  if(pct>0)return '#F5C4B3';
+  return '#F5F5F5';
+}
+
+function avgPct(entries){
+  if(!entries.length)return 0;
+  return Math.round(entries.reduce((a,e)=>a+(e.done/e.total*100),0)/entries.length);
+}
+
+function getRange(days){
+  const hist=loadHist();const result=[];const now=new Date();
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i);
+    const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    result.push({key:k,date:new Date(d),data:hist[k]||null});
+  }
+  return result;
+}
+
+function buildDashToday(){
+  const hist=loadHist();const k=todayKey();const d=hist[k];
+  const el=document.getElementById('dash-today');
+  if(!d){el.innerHTML=`<div style="font-size:13px;color:#999999;text-align:center;padding:16px;">No data yet today — start checking off your daily items.</div>`;return;}
+  const pct=Math.round((d.done/d.total)*100);
+  el.innerHTML=`<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">${ring(pct,'#0F6E56',72)}<div><div style="font-size:22px;font-weight:600;color:#0F6E56;">${d.done} / ${d.total}</div><div style="font-size:13px;color:#555555;">items complete today</div><div style="font-size:12px;color:#999999;">${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</div></div></div>`;
+  // Per-item breakdown
+  const items=d.items||[];
+  CHECK_LABELS.forEach((lbl,i)=>{
+    const done=items[i];
+    const row=document.createElement('div');row.className='dash-detail-item';
+    row.innerHTML=`<span style="width:14px;height:14px;border-radius:50%;background:${done?'#0F6E56':'#E5E5E5'};display:inline-block;flex-shrink:0;"></span><span style="color:${done?'#1A1A1A':'#BBBBBB'};${done?'':'text-decoration:line-through;'}">${lbl}</span>`;
+    el.appendChild(row);
+  });
+}
+
+function buildDashWeek(){
+  const entries=getRange(7);const el=document.getElementById('dash-week');
+  const withData=entries.filter(e=>e.data);
+  const avg=withData.length?avgPct(withData.map(e=>e.data)):0;
+  let html=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">${ring(avg,'#185FA5',64)}<div><div style="font-size:18px;font-weight:600;color:#185FA5;">${avg}% average</div><div style="font-size:12px;color:#999999;">${withData.length} of 7 days tracked</div></div></div>`;
+  html+=`<div class="dash-day-grid">`;
+  entries.forEach(e=>{
+    const pct=e.data?Math.round((e.data.done/e.data.total)*100):null;
+    const col=heatColor(pct);
+    const day=e.date.toLocaleDateString('en-US',{weekday:'short'}).slice(0,2);
+    const isToday=e.key===todayKey();
+    html+=`<div class="dash-day-cell" style="background:${col};border:${isToday?'2px solid #0F6E56':'2px solid transparent'};" onclick="showDayDetail('${e.key}')" title="${e.key}"><span style="color:${pct>=57?'#085041':'#888888'}">${day}</span></div>`;
+  });
+  html+=`</div><div style="font-size:11px;color:#999999;margin-top:6px;">Dark green = 86%+  ·  Light green = 57%+  ·  Yellow = 29%+  ·  Pink = started  ·  Gray = no data</div>`;
+  html+=`<div id="day-detail-panel"></div>`;
+  el.innerHTML=html;
+}
+
+function showDayDetail(key){
+  const hist=loadHist();const d=hist[key];
+  const panel=document.getElementById('day-detail-panel');
+  if(!panel)return;
+  if(!d){panel.innerHTML=`<div class="dash-detail open"><div class="dash-detail-title">${key}</div><div style="font-size:12px;color:#999999;">No data recorded for this day.</div></div>`;return;}
+  const pct=Math.round((d.done/d.total)*100);
+  let html=`<div class="dash-detail open"><div class="dash-detail-title">${key} — ${d.done}/${d.total} (${pct}%)</div>`;
+  const items=d.items||[];
+  CHECK_LABELS.forEach((lbl,i)=>{
+    html+=`<div class="dash-detail-item"><span style="width:10px;height:10px;border-radius:50%;background:${items[i]?'#0F6E56':'#E5E5E5'};display:inline-block;flex-shrink:0;"></span><span style="font-size:12px;color:${items[i]?'#1A1A1A':'#BBBBBB'}">${lbl}</span></div>`;
+  });
+  html+=`</div>`;
+  panel.innerHTML=html;
+}
+window.showDayDetail=showDayDetail;
+
+function buildDashMonth(){
+  const now=new Date();const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const entries=getRange(daysInMonth);const el=document.getElementById('dash-month');
+  const withData=entries.filter(e=>e.data);
+  const avg=withData.length?avgPct(withData.map(e=>e.data)):0;
+  const monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  let html=`<div style="margin-bottom:10px;display:flex;align-items:center;gap:12px;">${ring(avg,'#854F0B',60)}<div><div style="font-size:16px;font-weight:600;color:#854F0B;">${avg}% — ${monthName}</div><div style="font-size:12px;color:#999999;">${withData.length} days recorded of ${daysInMonth}</div></div></div>`;
+  html+=`<div class="dash-day-grid" style="grid-template-columns:repeat(7,1fr);">`;
+  entries.forEach(e=>{
+    const pct=e.data?Math.round((e.data.done/e.data.total)*100):null;
+    const col=heatColor(pct);const day=e.date.getDate();
+    const isToday=e.key===todayKey();
+    html+=`<div class="dash-day-cell" style="background:${col};border:${isToday?'2px solid #0F6E56':'1px solid transparent'};font-size:9px;" onclick="showDayDetail('${e.key}')">${day}</div>`;
+  });
+  html+=`</div><div style="font-size:11px;color:#999999;margin-top:6px;">Tap any day to see details</div>`;
+  el.innerHTML=html;
+}
+
+function buildDashQuarter(){
+  const entries=getRange(91);const el=document.getElementById('dash-quarter');
+  const withData=entries.filter(e=>e.data);
+  const avg=withData.length?avgPct(withData.map(e=>e.data)):0;
+  // Weekly breakdown
+  const weeks=[];
+  for(let i=0;i<13;i++){
+    const wk=entries.slice(i*7,i*7+7);
+    const wd=wk.filter(e=>e.data);
+    weeks.push({avg:wd.length?avgPct(wd.map(e=>e.data)):null,count:wd.length,label:`Wk ${i+1}`});
+  }
+  let html=`<div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;">${ring(avg,'#534AB7',60)}<div><div style="font-size:16px;font-weight:600;color:#534AB7;">${avg}% — last 13 weeks</div><div style="font-size:12px;color:#999999;">${withData.length} days recorded</div></div></div>`;
+  weeks.forEach(w=>{
+    const pct=w.avg||0;
+    html+=`<div class="dash-bar-row"><span class="dash-bar-label">${w.label}${w.count?'':' (no data)'}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${pct}%;background:${pct>=86?'#0F6E56':pct>=57?'#5DCAA5':pct>=29?'#EF9F27':'#F09595'};"></div></div><span class="dash-bar-pct">${w.count?pct+'%':'—'}</span></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function buildDashYear(){
+  const entries=getRange(365);const el=document.getElementById('dash-year');
+  const withData=entries.filter(e=>e.data);
+  const avg=withData.length?avgPct(withData.map(e=>e.data)):0;
+  // Monthly breakdown
+  const months={};
+  entries.forEach(e=>{
+    const mk=e.date.toLocaleDateString('en-US',{month:'short',year:'2-digit'});
+    if(!months[mk])months[mk]=[];
+    if(e.data)months[mk].push(e.data);
+  });
+  let html=`<div style="margin-bottom:12px;display:flex;align-items:center;gap:12px;">${ring(avg,'#3B6D11',60)}<div><div style="font-size:16px;font-weight:600;color:#3B6D11;">${avg}% — this year</div><div style="font-size:12px;color:#999999;">${withData.length} days recorded of 365</div></div></div>`;
+  Object.keys(months).forEach(mk=>{
+    const data=months[mk];const pct=data.length?avgPct(data):null;
+    html+=`<div class="dash-bar-row"><span class="dash-bar-label">${mk}</span><div class="dash-bar-track"><div class="dash-bar-fill" style="width:${pct||0}%;background:${!pct?'#F0F0F0':pct>=86?'#0F6E56':pct>=57?'#5DCAA5':pct>=29?'#EF9F27':'#F09595'};"></div></div><span class="dash-bar-pct">${pct!==null?pct+'%':'—'}</span></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function buildDashHistory(){
+  const hist=loadHist();const el=document.getElementById('dash-history');
+  const keys=Object.keys(hist).sort().reverse().slice(0,60);
+  if(!keys.length){el.innerHTML=`<div style="font-size:13px;color:#999999;text-align:center;padding:16px;">No history yet — check off items daily and they'll appear here.</div>`;return;}
+  let html='';
+  keys.forEach(k=>{
+    const d=hist[k];const pct=Math.round((d.done/d.total)*100);const col=heatColor(pct);
+    const dateStr=new Date(k+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+    html+=`<div onclick="showHistDetail('${k}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #F5F5F5;cursor:pointer;"><div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;"></div><div style="flex:1;font-size:13px;color:#1A1A1A;">${dateStr}</div><div style="font-size:13px;font-weight:600;color:${pct>=57?'#0F6E56':'#854F0B'};">${d.done}/${d.total}</div><div style="font-size:12px;color:#999999;">${pct}%</div></div><div id="hist-detail-${k}"></div>`;
+  });
+  el.innerHTML=html;
+}
+
+function showHistDetail(k){
+  const el=document.getElementById('hist-detail-'+k);if(!el)return;
+  if(el.innerHTML){el.innerHTML='';return;}
+  const hist=loadHist();const d=hist[k];if(!d)return;
+  const items=d.items||[];
+  let html=`<div style="background:#F8F7F4;border-radius:8px;padding:10px;margin-bottom:6px;">`;
+  CHECK_LABELS.forEach((lbl,i)=>{
+    html+=`<div style="display:flex;align-items:center;gap:6px;padding:3px 0;"><span style="width:8px;height:8px;border-radius:50%;background:${items[i]?'#0F6E56':'#E5E5E5'};display:inline-block;flex-shrink:0;"></span><span style="font-size:11px;color:${items[i]?'#333333':'#BBBBBB'}">${lbl}</span></div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+window.showHistDetail=showHistDetail;
+
+function buildDashboard(){
+  buildDashToday();buildDashWeek();buildDashMonth();buildDashQuarter();buildDashYear();buildDashHistory();
+}
 }// end init
 
 function go(id,el){
@@ -490,6 +781,7 @@ function go(id,el){
   document.getElementById('page-'+id).classList.add('on');
   el.classList.add('active');
   window.scrollTo(0,0);
+  if(id==='dashboard') try{buildDashboard();}catch(e){}
 }
 </script>
 </body>
